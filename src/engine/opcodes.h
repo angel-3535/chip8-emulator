@@ -52,7 +52,7 @@
 #define _FX55
 #define _FX65
 
-void _get_next_opcode(chip8 *chip8);
-void _process_opcode(chip8 *chip8);
+void _get_next_opcode(void);
+void _process_opcode(void);
 
 #endif

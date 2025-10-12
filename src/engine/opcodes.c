@@ -4,72 +4,85 @@
 #include "util/log.h"
 #include <stdio.h>
 
-u16 _get_x_register(chip8 *this) { return this->opcode & OPCODE_MASK_X; }
-u16 _get_y_register(chip8 *this) { return this->opcode & OPCODE_MASK_Y; }
-u16 _get_NN(chip8 *this) { return this->opcode & OPCODE_MASK_NN; }
-u16 _get_RR(chip8 *this) { return this->opcode & OPCODE_MASK_NN; }
-u16 _get_NNN(chip8 *this) { return this->opcode & OPCODE_MASK_NNN; }
+struct chip8 c8;
 
-void _get_next_opcode(chip8 *this) {
-  this->opcode = this->memory[this->pc] << 8 | this->memory[this->pc + 1];
+u16 _get_x_register() { return c8.opcode & OPCODE_MASK_X; }
+u16 _get_y_register() { return c8.opcode & OPCODE_MASK_Y; }
+u16 _get_NN() { return c8.opcode & OPCODE_MASK_NN; }
+u16 _get_RR() { return c8.opcode & OPCODE_MASK_NN; }
+u16 _get_NNN() { return c8.opcode & OPCODE_MASK_NNN; }
+
+void _get_next_opcode(void) {
+  c8.opcode = c8.memory[c8.pc] << 8 | c8.memory[c8.pc + 1];
 
   LOG("=====================\n");
-  LOG_INFO("PC: 0x%X\n", this->pc);
-  LOG_INFO("Opcode: 0x%X\n", this->opcode);
+  LOG_INFO("PC: 0x%X\n", c8.pc);
+  LOG_INFO("Opcode: 0x%X\n", c8.opcode);
 }
 
-void _process_opcode(chip8 *this) {
-  switch (this->opcode & OPCODE_MASK) {
+void _process_opcode() {
+  switch (c8.opcode & OPCODE_MASK) {
   case _0NNN:
-    LOG_ERROR("Instruction 0x%X to be implemented", this->opcode);
-    this->pc += 2;
+    LOG_ERROR("Instruction 0x%X to be implemented", c8.opcode);
+    c8.pc += 2;
     break;
 
   case _1NNN:
-    this->pc = this->opcode & OPCODE_MASK_NNN;
-    LOG_WARN("Jump to address 0x%X\n", this->pc - START_ADDRESS);
+    c8.pc = c8.opcode & OPCODE_MASK_NNN;
+    LOG_WARN("Jump to address 0x%X\n", c8.pc - START_ADDRESS);
     break;
   case _2NNN:
-    LOG_ERROR("Instruction 0x%X to be implemented", this->opcode);
-    this->pc += 2;
+    LOG_ERROR("Instruction 0x%X to be implemented", c8.opcode);
+    c8.pc += 2;
     break;
   case _3XRR:
-    if (this->V[_get_x_register(this)] == _get_RR(this)) {
-      this->pc += 4;
+    LOG_WARN("Skipping next instruction if V[%X] == 0x%X\n", _get_x_register(),
+             _get_RR());
+    if (c8.V[_get_x_register()] == _get_RR()) {
+      c8.pc += 4;
     } else {
-      this->pc += 2;
+      c8.pc += 2;
     }
     break;
 
   case _4XRR:
-    if (this->V[_get_x_register(this)] != _get_RR(this)) {
-      this->pc += 4;
+    LOG_WARN("Skipping next instruction if V[%X] != 0x%X\n", _get_x_register(),
+             _get_RR());
+    if (c8.V[_get_x_register()] != _get_RR()) {
+      c8.pc += 4;
     } else {
-      this->pc += 2;
+      c8.pc += 2;
     }
     break;
 
   case _5XYO:
-    if (this->V[_get_x_register(this)] == _get_y_register(this)) {
-      this->pc += 4;
+    LOG_WARN("Skipping next instruction if V[%X] == V[%X]\n", _get_x_register(),
+             _get_y_register());
+    if (c8.V[_get_x_register()] == _get_y_register()) {
+      c8.pc += 4;
     } else {
-      this->pc += 2;
+      c8.pc += 2;
     }
 
     break;
 
   case _6XRR:
-    this->V[_get_y_register(this)] = _get_RR(this);
-    this->pc += 2;
+    LOG_WARN("Setting V[%X] to 0x%X\n", _get_x_register(), _get_RR());
+    c8.V[_get_y_register()] = _get_RR();
+    c8.pc += 2;
+    break;
+
+  case _7XRR:
+    c8.V[_get_x_register()] += _get_RR();
     break;
   case _ANNN:
-    this->I = this->opcode & OPCODE_MASK_NNN;
-    LOG_WARN("I set to 0x%X\n", this->I);
-    this->pc += 2;
+    c8.I = c8.opcode & OPCODE_MASK_NNN;
+    LOG_WARN("I set to 0x%X\n", c8.I);
+    c8.pc += 2;
     break;
   default:
-    LOG_ERROR("Unknown opcode: 0x%X\n", this->opcode);
-    this->pc += 2;
+    LOG_ERROR("Unknown opcode: 0x%X\n", c8.opcode);
+    c8.pc += 2;
     // exit(EXIT_FAILURE);
   }
 }

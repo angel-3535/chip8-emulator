@@ -57,8 +57,8 @@ void chip8_init(chip8 *this) {
 void chip8_destroy(chip8 *this) {}
 
 void chip8_emulateCycle(chip8 *this) {
-  _get_next_opcode(this);
-  _process_opcode(this);
+  _get_next_opcode();
+  _process_opcode();
 
   if (this->delay_timer > 0)
     --this->delay_timer;
