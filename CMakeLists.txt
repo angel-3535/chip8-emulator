@@ -43,6 +43,9 @@ set_target_properties(glad PROPERTIES FOLDER "Dependencies")
 # Source files
 list(APPEND   SRC_FILES 
   src/main.c 
+  src/engine/chip8.c
+  src/engine/opcodes.c
+  src/gfx/window.c
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})

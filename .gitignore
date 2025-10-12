@@ -1,29 +1,26 @@
 
-# Ignore build directories
 build/
 out/
 cmake-build-*/
 
-# Ignore IDE-specific files
 .idea/
 *.iml
 *.ipr
 *.iws
 
-# Ignore CMake temporary and cache files
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 install_manifest.txt
 
-# Ignore compiled executables and libraries
 *.exe
 *.dll
 *.so
 *.dylib
 *.lib
 
-# Other common ignores
 *.log
 *.swp
 *~
+
+.cache

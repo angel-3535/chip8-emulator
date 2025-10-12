@@ -1,35 +1,39 @@
 
-#include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
+#include "gfx/window.h"
+#include "util/types.h"
 #include <GLFW/glfw3.h>
+#include <engine/chip8.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(int argc, char *argv[]) {
+// global chip8 instance
+chip8 c8;
+struct Window window;
 
-  if (!glfwInit()) {
-    fprintf(stderr, "Failed to initialize GLFW\n");
-    return EXIT_FAILURE;
+void init(void) {
+  chip8_init(&c8);
+  chip8_loadProgram(&c8, "../breakout.ch8");
+}
+void destroy(void) { chip8_destroy(&c8); }
+void update(void) {
+  if (window.keyboard.keys[GLFW_KEY_ESCAPE].down) {
+    glfwSetWindowShouldClose(window.handle, GLFW_TRUE);
   }
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  GLFWwindow *window = glfwCreateWindow(640, 480, "CHIP-8", NULL, NULL);
-
-  gladLoadGL((GLADloadfunc)glfwGetProcAddress);
-
-  if (!window) {
-    fprintf(stderr, "Failed to create window\n");
-    return EXIT_FAILURE;
+  if (is_key_pressed(GLFW_KEY_SPACE)) {
+    chip8_emulateCycle(&c8);
   }
-
-  while (!glfwWindowShouldClose(window)) {
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+}
+void render(void) {
+  if (1) {
+    chip8_drawGraphics(&c8);
   }
+}
 
-  glfwDestroyWindow(window);
-  glfwTerminate();
+i32 main(i32 argc, char *argv[]) {
+  window_create(init, destroy, update, render);
+  window_loop();
+
   return EXIT_SUCCESS;
 }
