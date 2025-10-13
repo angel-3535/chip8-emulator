@@ -9,8 +9,12 @@
 #define OPCODE_MASK_N 0x000F
 #define OPCODE_MASK_X 0x0F00
 #define OPCODE_MASK_Y 0x00F0
+#define OPCODE_MASK_NXYN 0xF00F
 
 #define OPCODE_MASK 0xF000
+
+#define M_8BIT_MASK 0b10000000
+#define L_8BIT_MASK 0b00000001
 
 // NNN = address
 // RR = 8-bit constant
@@ -23,23 +27,23 @@
 #define _2NNN 0x2000 // Call subroutine at NNN
 #define _3XRR 0x3000 // Skip next instruction if VX == RR
 #define _4XRR 0x4000 // Skip next instruction if VX == RR
-#define _5XYO 0x5000
+#define _5XY0 0x5000
 #define _6XRR 0x6000
 #define _7XRR 0x7000
-#define _8XYO 0x8000
-#define _8XY1 0x8000
-#define _8XY2 0x8000
-#define _8XY3 0x8000
-#define _8XY4 0x8000
-#define _8XY5 0x8000
-#define _8XY6 0x8000
-#define _8XY7 0x8000
-#define _8XYE 0x8000
+#define _8XY0 0x8000
+#define _8XY1 0x8001
+#define _8XY2 0x8002
+#define _8XY3 0x8003
+#define _8XY4 0x8004
+#define _8XY5 0x8005
+#define _8XY6 0x8006
+#define _8XY7 0x8007
+#define _8XYE 0x800E
 #define _9XY0 0x9000
 #define _ANNN 0xA000
-#define _BNNN
-#define _CXRR
-#define _DXYN
+#define _BNNN 0xB000
+#define _CXRR 0xC000
+#define _DXYN 0xD000
 #define _EX9E
 #define _EXA1
 #define _FX07

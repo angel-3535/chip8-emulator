@@ -4,7 +4,7 @@ include(FetchContent)
 
 
 project(CHIP-8-Emulator C)
-set(CMAKE_C_STANDARD 11) # Requires C11 standard
+set(CMAKE_C_STANDARD 23) # Requires C23 standard
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
