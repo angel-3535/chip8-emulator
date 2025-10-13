@@ -16,6 +16,8 @@
 #define FONTSET_START_ADDRESS 0x50
 #define FONTSET_SIZE 80
 
+#define NUMBER_OF_KEYS 16
+
 typedef struct chip8 {
   u16 opcode;                           // current opcode
   u8 memory[MEMORY_SIZE];               // 4K memory
@@ -27,7 +29,7 @@ typedef struct chip8 {
   u8 sound_timer;                       // sound timer
   u16 stack[16];                        // stack (16 levels)
   u16 sp;                               // stack pointer
-  u8 key[16];                           // HEX based keypad (0x0-0xF)
+  u8 key[NUMBER_OF_KEYS];               // HEX based keypad (0x0-0xF)
   u8 last_byte;
 } chip8;
 

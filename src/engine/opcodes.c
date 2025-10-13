@@ -36,25 +36,51 @@ void _get_next_opcode(void) {
   LOG_INFO("Opcode: 0x%X\n", c8.opcode);
 }
 
+u16 _get_sprite_addr(u8 vx) { return 0; }
+
 void _process_opcode() {
 
-  u16 x, y, n, rr, nnn;
+  u16 x, y, n, rr, nnn, sub_r;
   u8 vx, vy, rand_num;
   bool overflow;
 
   switch (c8.opcode & OPCODE_MASK) {
   case _0NNN:
-    LOG_ERROR("Instruction 0x%X to be implemented", c8.opcode);
-    c8.pc += 2;
+    switch (c8.opcode & OPCODE_MASK_N) {
+    case _00E0:
+      LOG_INFO("_00E0\n");
+      LOG_WARN("clearing screen");
+      for (u32 i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+        c8.gfx[i] = 0;
+      }
+      break;
+    case _00EE:
+      sub_r = c8.stack[c8.sp];
+      c8.sp--;
+      LOG_INFO("_00EE\n");
+      LOG_WARN("Return from Subroutine to 0x%X\n", sub_r);
+      c8.pc = sub_r;
+      break;
+    default:
+      LOG_ERROR("Unknown opcode: 0x%X\n", c8.opcode);
+      c8.pc += 2;
+      break;
+    }
     break;
 
   case _1NNN:
-    c8.pc = c8.opcode & OPCODE_MASK_NNN;
+    LOG_INFO("_1NNN\n");
     LOG_WARN("Jump to address 0x%X\n", c8.pc - START_ADDRESS);
+    c8.pc = c8.opcode & OPCODE_MASK_NNN;
+    LOG_WARN("Calling Subroutine at 0x%X\n", nnn);
     break;
   case _2NNN:
-    LOG_ERROR("Instruction 0x%X to be implemented", c8.opcode);
-    c8.pc += 2;
+    nnn = _get_NNN();
+    LOG_INFO("_2NNN\n");
+    LOG_WARN("Calling Subroutine at 0x%X\n", nnn);
+    c8.stack[c8.sp] = c8.pc;
+    c8.sp++;
+    c8.pc = nnn;
     break;
   case _3XRR:
     x = _get_x_register();
@@ -275,9 +301,131 @@ void _process_opcode() {
     LOG_INFO("_DXYN\n");
     LOG_WARN("Draw sprite at <V[%d](0x%X), V[%d](0x%X)> width 8 height %d\n", x,
              vx, y, vy, n);
-    LOG_ERROR("TO BE IMPLEMENTED\n");
+
+    for (u32 w = 0; w < 8; w++) {
+      c8.gfx[w + vx + (SCREEN_WIDTH * vy)] ^= c8.memory[c8.I];
+    }
+
     c8.pc += 2;
     break;
+  case _EXXX:
+    switch (c8.opcode & OPCODE_MASK_N) {
+    case _EX9E &OPCODE_MASK_N:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_EX9E\n");
+      LOG_WARN("Skips if the key at V[%d](0x%X) is press \n", x, vx);
+      c8.pc += c8.key[vx] ? 4 : 2;
+      break;
+    case _EXA1 &OPCODE_MASK_N:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_EX9E\n");
+      LOG_WARN("Skips if the key at V[%d](0x%X) is not press \n", x, vx);
+      c8.pc += c8.key[vx] ? 4 : 2;
+      break;
+    default:
+      LOG_ERROR("Unknown opcode: 0x%X\n", c8.opcode);
+      c8.pc += 2;
+    }
+    break;
+  case _FXXX:
+    switch (c8.opcode & OPCODE_MASK_NN) {
+    case _FX07 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX07\n");
+      LOG_WARN("Sets V[%d](0x%X) to val of Delay(0x%X)\n", x, vx,
+               c8.delay_timer);
+      c8.V[x] = c8.delay_timer;
+      c8.pc += 2;
+      break;
+    case _FX0A &OPCODE_MASK_NN:
+      x = _get_x_register();
+      LOG_INFO("_FX0A\n");
+      LOG_WARN("Awaiting key press and storing it in V[%d] \n", x);
+      for (u32 i; i < NUMBER_OF_KEYS; i++) {
+        if (c8.key[i]) {
+          c8.V[x] = i;
+          c8.pc += 2;
+        }
+      }
+      break;
+    case _FX15 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX15\n");
+      LOG_WARN("Setting Delay Timer to V[%d](0x%X)\n", x, vx);
+      c8.delay_timer = vx;
+      c8.pc += 2;
+      break;
+    case _FX18 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX15\n");
+      LOG_WARN("Setting Sound Timer to V[%d](0x%X)\n", x, vx);
+      c8.sound_timer = vx;
+      c8.pc += 2;
+      break;
+    case _FX1E &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX1E\n");
+      LOG_WARN("Adding V[%d](0x%X) I(0x%X)\n", x, vx, c8.I);
+      c8.I += vx;
+      LOG_WARN("Result: 0x%X\n", c8.I);
+      c8.pc += 2;
+      break;
+    case _FX29 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX1E\n");
+      LOG_WARN("Setting I to the location of sprite in V[%d](0x%X) \n", x, vx);
+      LOG_ERROR("Function not yet implemented\n");
+      c8.I += _get_sprite_addr(vx);
+      LOG_WARN("Result: 0x%X\n", c8.I);
+      c8.pc += 2;
+      break;
+    case _FX33 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX33\n");
+      LOG_WARN("Storing V[%d](0x%X) as binary-coded decimal\n", x, vx);
+      c8.memory[c8.I] = vx / 100;
+      c8.memory[c8.I + 1] = (vx / 10) % 10;
+      c8.memory[c8.I + 2] = (vx % 100) % 10;
+      c8.pc += 2;
+      break;
+    case _FX55 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX55\n");
+      LOG_WARN("Storing from V0 to V[%d](0x%X) starting at  I(0x%X)\n", x, vx,
+               c8.I);
+
+      for (u32 i = 0; i <= x; i++) {
+        c8.memory[c8.I + i] = c8.V[i];
+      }
+      c8.pc += 2;
+      break;
+    case _FX65 &OPCODE_MASK_NN:
+      x = _get_x_register();
+      vx = c8.V[x];
+      LOG_INFO("_FX65\n");
+      LOG_WARN("Loading from memory V0 to V[%d](0x%X) from address  I(0x%X)\n",
+               x, vx, c8.I);
+      for (u32 i = 0; i <= x; i++) {
+        c8.V[i] = c8.memory[c8.I + i];
+      }
+      c8.pc += 2;
+      break;
+    default:
+      LOG_ERROR("Unknown opcode: 0x%X\n", c8.opcode);
+      c8.pc += 2;
+      break;
+    }
+    break;
+
   default:
     LOG_ERROR("Unknown opcode: 0x%X\n", c8.opcode);
     c8.pc += 2;

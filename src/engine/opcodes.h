@@ -22,7 +22,7 @@
 // X, Y = 4-bit register identifier
 #define _0NNN 0x0000
 #define _00E0 0x0000
-#define _00EE 0x0000
+#define _00EE 0x000E
 #define _1NNN 0x1000 // Jump to address NNN
 #define _2NNN 0x2000 // Call subroutine at NNN
 #define _3XRR 0x3000 // Skip next instruction if VX == RR
@@ -44,17 +44,19 @@
 #define _BNNN 0xB000
 #define _CXRR 0xC000
 #define _DXYN 0xD000
-#define _EX9E
-#define _EXA1
-#define _FX07
-#define _FX0A
-#define _FX15
-#define _FX18
-#define _FX1E
-#define _FX29
-#define _FX33
-#define _FX55
-#define _FX65
+#define _EXXX 0xE000
+#define _EX9E 0xE00E
+#define _EXA1 0xE001
+#define _FXXX 0xF000
+#define _FX07 0xF007
+#define _FX0A 0xF00A
+#define _FX15 0xF015
+#define _FX18 0xF018
+#define _FX1E 0xF01E
+#define _FX29 0xF029
+#define _FX33 0xF033
+#define _FX55 0xF055
+#define _FX65 0xF065
 
 void _get_next_opcode(void);
 void _process_opcode(void);

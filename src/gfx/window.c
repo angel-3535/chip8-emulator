@@ -14,6 +14,7 @@ bool is_key_pressed(i32 key) {
   }
   return (window.keyboard.keys[key].pressed_frame == window.frames);
 }
+bool is_key_down(i32 key) { return (window.keyboard.keys[key].down); }
 
 static void _key_callback(GLFWwindow *handle, int key, int scancode, int action,
                           int mods) {
@@ -59,8 +60,8 @@ void window_create(FWindow init, FWindow destroy, FWindow update,
   }
 
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 

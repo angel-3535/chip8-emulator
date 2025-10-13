@@ -1,10 +1,14 @@
 
+#include "glad/gl.h"
 #include "util/log.h"
 #include <engine/chip8.h>
 #include <engine/opcodes.h>
+#include <gfx/renderer.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+struct renderer renderer;
 
 u8 chip8_fontset[FONTSET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -26,6 +30,7 @@ u8 chip8_fontset[FONTSET_SIZE] = {
 };
 
 void chip8_init(chip8 *this) {
+  renderer_init();
   this->pc = START_ADDRESS; // Program counter starts at 0x200
   this->opcode = 0;
   this->I = 0;
@@ -69,7 +74,18 @@ void chip8_emulateCycle(chip8 *this) {
     --this->sound_timer;
   }
 }
-void chip8_drawGraphics(chip8 *this) {}
+void chip8_drawGraphics(chip8 *this) {
+  glBegin(GL_TRIANGLES);       // Begin drawing triangles
+  glColor3f(1.0f, 0.0f, 0.0f); // Red color
+  glVertex3f(-0.5f, -0.5f, 0.0f);
+
+  glColor3f(0.0f, 1.0f, 0.0f); // Green color
+  glVertex3f(0.5f, -0.5f, 0.0f);
+
+  glColor3f(0.0f, 0.0f, 1.0f); // Blue color
+  glVertex3f(0.0f, 0.5f, 0.0f);
+  glEnd(); // End drawing triangles}
+}
 
 void chip8_loadProgram(chip8 *this, const char *filename) {
   FILE *file = fopen(filename, "rb");

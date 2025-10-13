@@ -1,4 +1,5 @@
 
+#include "util/log.h"
 #define GLFW_INCLUDE_NONE
 #include "gfx/window.h"
 #include "util/types.h"
@@ -21,14 +22,13 @@ void update(void) {
     glfwSetWindowShouldClose(window.handle, GLFW_TRUE);
   }
 
-  if (is_key_pressed(GLFW_KEY_SPACE)) {
+  if (is_key_pressed(GLFW_KEY_SPACE) || is_key_down(GLFW_KEY_K)) {
     chip8_emulateCycle(&c8);
   }
 }
 void render(void) {
-  if (1) {
-    chip8_drawGraphics(&c8);
-  }
+  LOG_INFO("Rendering frame %d\n", window.frames);
+  chip8_drawGraphics(&c8);
 }
 
 i32 main(i32 argc, char *argv[]) {

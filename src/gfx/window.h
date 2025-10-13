@@ -2,7 +2,9 @@
 #define GFXWINDOW_H
 
 #include "../util/types.h"
+#include "glad/gl.h"
 #define GLFW_INCLUDE_NONE
+
 #include "GLFW/glfw3.h"
 
 struct Button {
@@ -26,6 +28,7 @@ struct Window {
 extern struct Window window;
 
 bool is_key_pressed(i32 key);
+bool is_key_down(i32 key);
 void window_loop(void);
 void window_create(FWindow init, FWindow destroy, FWindow update,
                    FWindow render);

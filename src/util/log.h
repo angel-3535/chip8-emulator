@@ -7,7 +7,7 @@
 
 #define LOG(...)                                                               \
   do {                                                                         \
-    fprintf(stdout, "[\x1b[0m-----\x1b[0m] " __VA_ARGS__);                     \
+    fprintf(stdout, "[\x1b[0m----\x1b[0m] " __VA_ARGS__);                      \
   } while (0)
 
 #define LOG_GOOD(...)                                                          \
