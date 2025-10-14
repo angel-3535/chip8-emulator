@@ -28,6 +28,30 @@ u8 chip8_fontset[FONTSET_SIZE] = {
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+void _clear_screen(chip8 *self) {
+  for (i32 i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i) {
+    self->gfx[i] = 0;
+  }
+}
+
+void _draw_pixel(chip8 *this, u8 x, u8 y) {
+  if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
+    return;
+    LOG_ERROR("Pixel out of bounds: (%d, %d)\n", x, y);
+  }
+  u32 index = x + (y * SCREEN_WIDTH);
+  this->V[0xF] = this->gfx[index] & 1; // Set VF to 1 if pixel is erased
+  this->gfx[index] = 1;
+  LOG_INFO("Drew pixel at (%d, %d)\n", x, y);
+}
+
+void _draw_rectangle(chip8 *this, u8 x, u8 y, u8 w, u8 h) {
+  for (u8 i = 0; i < w; ++i) {
+    for (u8 j = 0; j < h; ++j) {
+      _draw_pixel(this, x + i, y + j);
+    }
+  }
+}
 
 void chip8_init(chip8 *this) {
   renderer_init();
@@ -41,6 +65,7 @@ void chip8_init(chip8 *this) {
   for (i32 i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i) {
     this->gfx[i] = 0;
   }
+
   // clear stack
   // clear registers V0-VF
   for (i32 i = 0; i < 16; ++i) {
@@ -59,7 +84,7 @@ void chip8_init(chip8 *this) {
   }
 }
 
-void chip8_destroy(chip8 *this) {}
+void chip8_destroy(chip8 *this) { renderer_destroy(); }
 
 void chip8_emulateCycle(chip8 *this) {
   _get_next_opcode();
@@ -75,16 +100,8 @@ void chip8_emulateCycle(chip8 *this) {
   }
 }
 void chip8_drawGraphics(chip8 *this) {
-  glBegin(GL_TRIANGLES);       // Begin drawing triangles
-  glColor3f(1.0f, 0.0f, 0.0f); // Red color
-  glVertex3f(-0.5f, -0.5f, 0.0f);
-
-  glColor3f(0.0f, 1.0f, 0.0f); // Green color
-  glVertex3f(0.5f, -0.5f, 0.0f);
-
-  glColor3f(0.0f, 0.0f, 1.0f); // Blue color
-  glVertex3f(0.0f, 0.5f, 0.0f);
-  glEnd(); // End drawing triangles}
+  renderer_update_texture(this->gfx, SCREEN_WIDTH, SCREEN_HEIGHT);
+  renderer_draw_buffer();
 }
 
 void chip8_loadProgram(chip8 *this, const char *filename) {

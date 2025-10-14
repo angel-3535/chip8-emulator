@@ -31,6 +31,7 @@ typedef struct chip8 {
   u16 sp;                               // stack pointer
   u8 key[NUMBER_OF_KEYS];               // HEX based keypad (0x0-0xF)
   u8 last_byte;
+  uv2 debug_pixel;
 } chip8;
 
 void chip8_init(chip8 *self);
@@ -38,6 +39,8 @@ void chip8_destroy(chip8 *self);
 void chip8_emulateCycle(chip8 *self);
 void chip8_drawGraphics(chip8 *self);
 void chip8_loadProgram(chip8 *self, const char *filename);
+void _draw_pixel(chip8 *self, u8 x, u8 y);
+void _clear_screen(chip8 *self);
 
 // global chip8 instance
 struct chip8 c8;

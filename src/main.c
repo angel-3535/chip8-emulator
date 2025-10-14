@@ -22,14 +22,25 @@ void update(void) {
     glfwSetWindowShouldClose(window.handle, GLFW_TRUE);
   }
 
+  if (is_key_pressed(GLFW_KEY_C)) {
+    _clear_screen(&c8);
+  }
+  if (is_key_pressed(GLFW_KEY_D))
+    c8.debug_pixel.x++;
+  if (is_key_pressed(GLFW_KEY_A))
+    c8.debug_pixel.x--;
+  if (is_key_pressed(GLFW_KEY_W))
+    c8.debug_pixel.y--;
+  if (is_key_pressed(GLFW_KEY_S))
+    c8.debug_pixel.y++;
+
+  _draw_pixel(&c8, c8.debug_pixel.x, c8.debug_pixel.y);
+
   if (is_key_pressed(GLFW_KEY_SPACE) || is_key_down(GLFW_KEY_K)) {
     chip8_emulateCycle(&c8);
   }
 }
-void render(void) {
-  LOG_INFO("Rendering frame %d\n", window.frames);
-  chip8_drawGraphics(&c8);
-}
+void render(void) { chip8_drawGraphics(&c8); }
 
 i32 main(i32 argc, char *argv[]) {
   window_create(init, destroy, update, render);
