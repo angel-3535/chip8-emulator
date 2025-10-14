@@ -14,7 +14,7 @@ u16 _get_x_register(void) {
   return x;
 }
 u16 _get_y_register(void) {
-  u16 y = (c8.opcode & OPCODE_MASK_X) >> 8;
+  u16 y = (c8.opcode & OPCODE_MASK_Y) >> 4;
   LOG_INFO("accessing register V[%d]\n", y);
   return y;
 }
@@ -36,12 +36,22 @@ void _get_next_opcode(void) {
   LOG_INFO("Opcode: 0x%X\n", c8.opcode);
 }
 
+bool _draw_pixel(u8 x, u8 y) {
+  if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
+    return false;
+  }
+  u32 index = x + (y * SCREEN_WIDTH);
+  c8.gfx[index] ^= 1;
+  return !c8.gfx[index];
+}
+
 u16 _get_sprite_addr(u8 vx) { return 0; }
 
 void _process_opcode() {
 
   u16 x, y, n, rr, nnn, sub_r;
   u8 vx, vy, rand_num;
+  bool sprite_pixel[8 * 15]; // max sprite size 8x15
   bool overflow;
 
   switch (c8.opcode & OPCODE_MASK) {
@@ -49,16 +59,26 @@ void _process_opcode() {
     switch (c8.opcode & OPCODE_MASK_N) {
     case _00E0:
       LOG_INFO("_00E0\n");
-      LOG_WARN("clearing screen");
+      LOG_WARN("clearing screen\n");
       for (u32 i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
         c8.gfx[i] = 0;
       }
+      c8.draw_flag = true;
+      c8.pc += 2;
       break;
     case _00EE:
       sub_r = c8.stack[c8.sp];
-      c8.sp--;
       LOG_INFO("_00EE\n");
       LOG_WARN("Return from Subroutine to 0x%X\n", sub_r);
+      // PRINT STACK();
+      LOG_INFO("Stack dump:\n");
+      for (u32 i = 0; i < 16; i++) {
+        LOG_INFO("Stack[%d]: 0x%X\n", i, c8.stack[i]);
+        if (i == c8.sp)
+          LOG_INFO("  ^ SP\n");
+        break;
+      }
+      c8.sp--;
       c8.pc = sub_r;
       break;
     default:
@@ -69,17 +89,17 @@ void _process_opcode() {
     break;
 
   case _1NNN:
+    nnn = _get_NNN();
     LOG_INFO("_1NNN\n");
-    LOG_WARN("Jump to address 0x%X\n", c8.pc - START_ADDRESS);
-    c8.pc = c8.opcode & OPCODE_MASK_NNN;
-    LOG_WARN("Calling Subroutine at 0x%X\n", nnn);
+    LOG_WARN("Jump to address 0x%X\n", nnn);
+    c8.pc = nnn;
     break;
   case _2NNN:
     nnn = _get_NNN();
     LOG_INFO("_2NNN\n");
     LOG_WARN("Calling Subroutine at 0x%X\n", nnn);
-    c8.stack[c8.sp] = c8.pc;
     c8.sp++;
+    c8.stack[c8.sp] = c8.pc;
     c8.pc = nnn;
     break;
   case _3XRR:
@@ -301,11 +321,33 @@ void _process_opcode() {
     LOG_INFO("_DXYN\n");
     LOG_WARN("Draw sprite at <V[%d](0x%X), V[%d](0x%X)> width 8 height %d\n", x,
              vx, y, vy, n);
+    c8.V[0xF] = 0;
 
-    for (u32 w = 0; w < 8; w++) {
-      c8.gfx[w + vx + (SCREEN_WIDTH * vy)] ^= c8.memory[c8.I];
+    for (u32 row = 0; row < n; row++) {
+      for (u32 col = 0; col < 8; col++) {
+        sprite_pixel[row * 8 + col] =
+            (c8.memory[c8.I + row] >> (7 - col)) & 0x1;
+      }
+      LOG_INFO("Sprite row:[ %d,%d,%d,%d,%d,%d,%d,%d]:",
+               sprite_pixel[row * 8 + 0], sprite_pixel[row * 8 + 1],
+               sprite_pixel[row * 8 + 2], sprite_pixel[row * 8 + 3],
+               sprite_pixel[row * 8 + 4], sprite_pixel[row * 8 + 5],
+               sprite_pixel[row * 8 + 6], sprite_pixel[row * 8 + 7]);
+      LOG_NEWLINE();
     }
 
+    for (u32 row = 0; row < n; row++) {
+      for (u32 col = 0; col < 8; col++) {
+        if (sprite_pixel[row * 8 + col]) {
+          if (_draw_pixel((vx + col) % SCREEN_WIDTH,
+                          (vy + row) % SCREEN_HEIGHT)) {
+            c8.V[0xF] = 1;
+          }
+        }
+      }
+    }
+
+    c8.draw_flag = true;
     c8.pc += 2;
     break;
   case _EXXX:

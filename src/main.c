@@ -17,29 +17,33 @@ void init(void) {
   chip8_loadProgram(&c8, "../breakout.ch8");
 }
 void destroy(void) { chip8_destroy(&c8); }
+
 void update(void) {
-  if (window.keyboard.keys[GLFW_KEY_ESCAPE].down) {
+  if (window.keyboard.keys[GLFW_KEY_ESCAPE].down)
     glfwSetWindowShouldClose(window.handle, GLFW_TRUE);
-  }
 
-  if (is_key_pressed(GLFW_KEY_C)) {
-    _clear_screen(&c8);
-  }
-  if (is_key_pressed(GLFW_KEY_D))
-    c8.debug_pixel.x++;
-  if (is_key_pressed(GLFW_KEY_A))
-    c8.debug_pixel.x--;
-  if (is_key_pressed(GLFW_KEY_W))
-    c8.debug_pixel.y--;
-  if (is_key_pressed(GLFW_KEY_S))
-    c8.debug_pixel.y++;
-
-  _draw_pixel(&c8, c8.debug_pixel.x, c8.debug_pixel.y);
-
-  if (is_key_pressed(GLFW_KEY_SPACE) || is_key_down(GLFW_KEY_K)) {
+  if (!c8.step_engine || is_key_pressed(GLFW_KEY_SPACE))
     chip8_emulateCycle(&c8);
+
+  if (is_key_pressed(GLFW_KEY_P)) {
+    LOG_INFO("Stack dump:\n");
+    for (u32 i = 0; i < 16; i++) {
+      LOG_INFO("Stack[%d]: 0x%X\n", i, c8.stack[i]);
+      if (i == c8.sp) {
+        LOG_INFO("SP = %d\n", c8.sp);
+        break;
+      }
+    }
   }
+
+  if (is_key_pressed(GLFW_KEY_K)) {
+    c8.step_engine = !c8.step_engine;
+    LOG_INFO("Stepping mode: %s\n", c8.step_engine ? "ON" : "OFF");
+  }
+
+  chip8_setKeys(&c8);
 }
+
 void render(void) { chip8_drawGraphics(&c8); }
 
 i32 main(i32 argc, char *argv[]) {

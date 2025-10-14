@@ -4,11 +4,13 @@
 #include <engine/chip8.h>
 #include <engine/opcodes.h>
 #include <gfx/renderer.h>
+#include <gfx/window.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 struct renderer renderer;
+struct Window window;
 
 u8 chip8_fontset[FONTSET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -28,37 +30,16 @@ u8 chip8_fontset[FONTSET_SIZE] = {
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
-void _clear_screen(chip8 *self) {
-  for (i32 i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i) {
-    self->gfx[i] = 0;
-  }
-}
-
-void _draw_pixel(chip8 *this, u8 x, u8 y) {
-  if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) {
-    return;
-    LOG_ERROR("Pixel out of bounds: (%d, %d)\n", x, y);
-  }
-  u32 index = x + (y * SCREEN_WIDTH);
-  this->V[0xF] = this->gfx[index] & 1; // Set VF to 1 if pixel is erased
-  this->gfx[index] = 1;
-  LOG_INFO("Drew pixel at (%d, %d)\n", x, y);
-}
-
-void _draw_rectangle(chip8 *this, u8 x, u8 y, u8 w, u8 h) {
-  for (u8 i = 0; i < w; ++i) {
-    for (u8 j = 0; j < h; ++j) {
-      _draw_pixel(this, x + i, y + j);
-    }
-  }
-}
 
 void chip8_init(chip8 *this) {
+
   renderer_init();
+  this->step_engine = false;
+  this->draw_flag = false;
   this->pc = START_ADDRESS; // Program counter starts at 0x200
   this->opcode = 0;
   this->I = 0;
-  this->sp = 0;
+  this->sp = -1;
   this->last_byte = 0;
 
   // clear display
@@ -99,9 +80,35 @@ void chip8_emulateCycle(chip8 *this) {
     --this->sound_timer;
   }
 }
+
 void chip8_drawGraphics(chip8 *this) {
-  renderer_update_texture(this->gfx, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+  if (this->draw_flag)
+    renderer_update_texture(this->gfx, SCREEN_WIDTH, SCREEN_HEIGHT);
+  this->draw_flag = false;
   renderer_draw_buffer();
+}
+
+void chip8_setKeys(chip8 *this) {
+  this->key[0x1] = is_key_down(GLFW_KEY_1);
+  this->key[0x2] = is_key_down(GLFW_KEY_2);
+  this->key[0x3] = is_key_down(GLFW_KEY_3);
+  this->key[0xC] = is_key_down(GLFW_KEY_4);
+
+  this->key[0x4] = is_key_down(GLFW_KEY_Q);
+  this->key[0x5] = is_key_down(GLFW_KEY_W);
+  this->key[0x6] = is_key_down(GLFW_KEY_E);
+  this->key[0xD] = is_key_down(GLFW_KEY_R);
+
+  this->key[0x7] = is_key_down(GLFW_KEY_A);
+  this->key[0x8] = is_key_down(GLFW_KEY_S);
+  this->key[0x9] = is_key_down(GLFW_KEY_D);
+  this->key[0xE] = is_key_down(GLFW_KEY_F);
+
+  this->key[0xA] = is_key_down(GLFW_KEY_Z);
+  this->key[0x0] = is_key_down(GLFW_KEY_X);
+  this->key[0xB] = is_key_down(GLFW_KEY_C);
+  this->key[0xF] = is_key_down(GLFW_KEY_V);
 }
 
 void chip8_loadProgram(chip8 *this, const char *filename) {
@@ -123,6 +130,6 @@ void chip8_loadProgram(chip8 *this, const char *filename) {
     if ((i / 2 + 1) % 8 == 0)
       printf("\n");
   }
-  LOG_NEWLINE()
+  LOG_NEWLINE();
   LOG_GOOD("Program loaded...\n");
 }
