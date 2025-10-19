@@ -70,7 +70,6 @@ void _process_opcode() {
       sub_r = c8.stack[c8.sp];
       LOG_INFO("_00EE\n");
       LOG_WARN("Return from Subroutine to 0x%X\n", sub_r);
-      // PRINT STACK();
       LOG_INFO("Stack dump:\n");
       for (u32 i = 0; i < 16; i++) {
         LOG_INFO("Stack[%d]: 0x%X\n", i, c8.stack[i]);

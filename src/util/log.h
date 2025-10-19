@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define LOG_DISABLE
+// #define LOG_DISABLE
 #ifndef LOG_DISABLE
 
 #define LOG(...)                                                               \

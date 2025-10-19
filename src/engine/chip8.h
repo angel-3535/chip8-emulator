@@ -28,7 +28,7 @@ typedef struct chip8 {
   u8 delay_timer;                       // delay timer
   u8 sound_timer;                       // sound timer
   u16 stack[16];                        // stack (16 levels)
-  u16 sp;                               // stack pointer
+  i16 sp;                               // stack pointer
   u8 key[NUMBER_OF_KEYS];               // HEX based keypad (0x0-0xF)
   u8 last_byte;
   bool draw_flag;
