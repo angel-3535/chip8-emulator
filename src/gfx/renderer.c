@@ -90,15 +90,14 @@ void renderer_destroy(void) {
 
 void renderer_update_texture(const u8 *buffer, u32 buffer_width,
                              u32 buffer_height) {
+  u8 temp[SCREEN_WIDTH * SCREEN_HEIGHT];
   for (u32 i = 0; i < buffer_width * buffer_height; i++) {
-    if (buffer[i] != 0) {
-      ((u8 *)buffer)[i] = 255;
-    }
+    temp[i] = buffer[i] ? 255 : 0;
   }
 
   glBindTexture(GL_TEXTURE_2D, renderer.texture);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, buffer_width, buffer_height, GL_RED,
-                  GL_UNSIGNED_BYTE, buffer);
+                  GL_UNSIGNED_BYTE, temp);
 }
 
 void renderer_draw_buffer(void) {

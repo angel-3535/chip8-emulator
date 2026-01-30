@@ -45,7 +45,7 @@ bool _draw_pixel(u8 x, u8 y) {
   return !c8.gfx[index];
 }
 
-u16 _get_sprite_addr(u8 vx) { return 0; }
+u16 _get_sprite_addr(u8 vx) { return FONTSET_START_ADDRESS + (vx * 5); }
 
 void _process_opcode() {
 
@@ -98,7 +98,7 @@ void _process_opcode() {
     LOG_INFO("_2NNN\n");
     LOG_WARN("Calling Subroutine at 0x%X\n", nnn);
     c8.sp++;
-    c8.stack[c8.sp] = c8.pc;
+    c8.stack[c8.sp] = c8.pc + 2;
     c8.pc = nnn;
     break;
   case _3XRR:
@@ -229,8 +229,8 @@ void _process_opcode() {
       vy = c8.V[y];
       LOG_INFO("_8XY5\n");
       LOG_WARN("Setting V[%d](0x%X) -=  V[%d](0x%X) \n", x, vx, y, vy);
+      c8.V[x] = vx - vy;
       c8.V[0xF] = vx >= vy ? 1 : 0;
-      c8.V[x] -= vy;
       LOG_WARN("Result: 0x%X\n", c8.V[x]);
       c8.pc += 2;
       break;
@@ -264,7 +264,7 @@ void _process_opcode() {
       LOG_INFO("_8XYE\n");
       LOG_WARN("Shifting << 1 V[%d](0x%X)\n", x, vx);
       c8.V[x] <<= 1;
-      c8.V[0xF] = vx & M_8BIT_MASK;
+      c8.V[0xF] = (vx >> 7) & 1;
       LOG_WARN("Result: 0x%X\n", c8.V[x]);
       c8.pc += 2;
       break;
@@ -298,7 +298,7 @@ void _process_opcode() {
     nnn = _get_NNN();
     LOG_INFO("_BNNN\n");
     LOG_WARN("Jump to address 0x%X + V0(0x%X)\n", nnn, c8.V[0]);
-    c8.pc += nnn + c8.V[0];
+    c8.pc = nnn + c8.V[0];
     break;
   case _CXRR:
     x = _get_x_register();
@@ -306,16 +306,16 @@ void _process_opcode() {
     rr = _get_RR();
     rand_num = _get_random_u8();
     LOG_INFO("_CXRR\n");
-    LOG_WARN("Sets V[%d](0x%X) to (0x%X) & 0x%X\n", x, vx, vx, rand_num);
-    c8.V[x] &= rand_num;
+    LOG_WARN("Sets V[%d](0x%X) to (0x%X) & 0x%X\n", x, vx, rand_num, rr);
+    c8.V[x] = rand_num & rr;
     LOG_WARN("Result: 0x%X\n", c8.V[x]);
     c8.pc += 2;
     break;
   case _DXYN:
     x = _get_x_register();
     y = _get_y_register();
-    vx = c8.V[x];
-    vy = c8.V[y];
+    vx = c8.V[x] % SCREEN_WIDTH;
+    vy = c8.V[y] % SCREEN_HEIGHT;
     n = _get_N();
     LOG_INFO("_DXYN\n");
     LOG_WARN("Draw sprite at <V[%d](0x%X), V[%d](0x%X)> width 8 height %d\n", x,
@@ -338,8 +338,7 @@ void _process_opcode() {
     for (u32 row = 0; row < n; row++) {
       for (u32 col = 0; col < 8; col++) {
         if (sprite_pixel[row * 8 + col]) {
-          if (_draw_pixel((vx + col) % SCREEN_WIDTH,
-                          (vy + row) % SCREEN_HEIGHT)) {
+          if (_draw_pixel(vx + col, vy + row)) {
             c8.V[0xF] = 1;
           }
         }
@@ -361,9 +360,9 @@ void _process_opcode() {
     case _EXA1 &OPCODE_MASK_N:
       x = _get_x_register();
       vx = c8.V[x];
-      LOG_INFO("_EX9E\n");
+      LOG_INFO("_EXA1\n");
       LOG_WARN("Skips if the key at V[%d](0x%X) is not press \n", x, vx);
-      c8.pc += c8.key[vx] ? 4 : 2;
+      c8.pc += c8.key[vx] ? 2 : 4;
       break;
     default:
       LOG_ERROR("Unknown opcode: 0x%X\n", c8.opcode);
@@ -385,10 +384,11 @@ void _process_opcode() {
       x = _get_x_register();
       LOG_INFO("_FX0A\n");
       LOG_WARN("Awaiting key press and storing it in V[%d] \n", x);
-      for (u32 i; i < NUMBER_OF_KEYS; i++) {
+      for (u32 i = 0; i < NUMBER_OF_KEYS; i++) {
         if (c8.key[i]) {
           c8.V[x] = i;
           c8.pc += 2;
+          break;
         }
       }
       break;
@@ -420,10 +420,9 @@ void _process_opcode() {
     case _FX29 &OPCODE_MASK_NN:
       x = _get_x_register();
       vx = c8.V[x];
-      LOG_INFO("_FX1E\n");
+      LOG_INFO("_FX29\n");
       LOG_WARN("Setting I to the location of sprite in V[%d](0x%X) \n", x, vx);
-      LOG_ERROR("Function not yet implemented\n");
-      c8.I += _get_sprite_addr(vx);
+      c8.I = _get_sprite_addr(vx);
       LOG_WARN("Result: 0x%X\n", c8.I);
       c8.pc += 2;
       break;
