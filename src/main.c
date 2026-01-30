@@ -22,8 +22,8 @@ void update(void) {
   if (window.keyboard.keys[GLFW_KEY_ESCAPE].down)
     glfwSetWindowShouldClose(window.handle, GLFW_TRUE);
 
-  if (!c8.step_engine || is_key_pressed(GLFW_KEY_SPACE))
-    chip8_emulateCycle(&c8);
+  chip8_setKeys(&c8);
+  chip8_emulateCycle(&c8);
 
   if (is_key_pressed(GLFW_KEY_P)) {
     LOG_INFO("Stack dump:\n");
@@ -35,13 +35,6 @@ void update(void) {
       }
     }
   }
-
-  if (is_key_pressed(GLFW_KEY_K)) {
-    c8.step_engine = !c8.step_engine;
-    LOG_INFO("Stepping mode: %s\n", c8.step_engine ? "ON" : "OFF");
-  }
-
-  chip8_setKeys(&c8);
 }
 
 void render(void) { chip8_drawGraphics(&c8); }

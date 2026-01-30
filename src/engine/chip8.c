@@ -34,7 +34,6 @@ u8 chip8_fontset[FONTSET_SIZE] = {
 void chip8_init(chip8 *this) {
 
   renderer_init();
-  this->step_engine = false;
   this->draw_flag = false;
   this->pc = START_ADDRESS; // Program counter starts at 0x200
   this->opcode = 0;
@@ -68,9 +67,13 @@ void chip8_init(chip8 *this) {
 void chip8_destroy(chip8 *this) { renderer_destroy(); }
 
 void chip8_emulateCycle(chip8 *this) {
-  _get_next_opcode();
-  _process_opcode();
+  // Run multiple instructions per frame (~500 IPS at 60fps)
+  for (int i = 0; i < 8; i++) {
+    _get_next_opcode();
+    _process_opcode();
+  }
 
+  // Timers tick at 60Hz (once per frame), not per instruction
   if (this->delay_timer > 0)
     --this->delay_timer;
   if (this->sound_timer > 0) {

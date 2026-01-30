@@ -32,7 +32,6 @@ typedef struct chip8 {
   u8 key[NUMBER_OF_KEYS];               // HEX based keypad (0x0-0xF)
   u8 last_byte;
   bool draw_flag;
-  bool step_engine;
 } chip8;
 
 void chip8_init(chip8 *self);
